@@ -1,7 +1,6 @@
+import json
 import logging
 import sys
-
-logger = logging.getLogger('mcdr_debugger')
 
 
 class Config:
@@ -52,8 +51,23 @@ class Config:
     # see mcdr official docs for more details
     # Default: --ignore-patterns __pycache__ (will ignore __pycache__)
 
+    def keys(self):
+        return ('debug', 'core_server_url', 'auto_eula', 'plugins', 'python_path',
+                'pip_path', 'env_path', 'method', 'plugin_code_path', 'mcdr_pack_extra_options')
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+logger = logging.getLogger('mcdr_debugger')
+
+config = Config()
+
 
 def main(args: list):
+    if args[0] == 'gen_config':
+        with open(r'./env1.json', 'w', encoding='utf-8') as f:
+            f.write(json.dumps(dict(config)))
     if args[0] == 'init':
         pass
 
