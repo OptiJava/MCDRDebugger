@@ -91,14 +91,14 @@ config = Config()
 
 def main(args: list):
     global config
-    if args[0] == 'gen_config':
+    if args[1] == 'gen_config':
         logger.info('Generating default config file.')
         with open(r'./env1.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(config.__dict__))
-    if args[0] == 'init':
+    if args[1] == 'init':
         # read config
-        logger.info(f'Reading config file at {args[1]}')
-        with open(args[1], 'r', encoding='utf-8') as f:
+        logger.info(f'Reading config file at {args[2]}')
+        with open(args[2], 'r', encoding='utf-8') as f:
             def dict2config(d):
                 return Config(d['debug'], d['core_server_url'], d['auto_eula'], d['plugins'], d['python_path'],
                               d['pip_path'], d['env_path'], d['method'], d['plugin_code_path'],
