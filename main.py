@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 
 
@@ -89,8 +90,69 @@ logger = logging.getLogger('mcdr_debugger')
 config = Config()
 
 
+def execute_command(cmd: str, default_decision_code: int = 1):
+    def exe():
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        while True:
+            line = process.stdout.readline()
+            if not line:
+                logger.info(f'Operation finished. Exit code: {process.returncode}')
+                break
+            print(line)
+        return process.returncode
+    while True:
+        if exe() is not 0:  # TODO: specific mcdr version
+            logger.debug('Failed!')
+            if err_note(f'Failed to execute {cmd}', default_decision_code) is 0:
+                break
+            else:
+                continue
+        else:
+            break
+
+
+def err_note(msg: str, default: int) -> int:
+    # Return code: 1: exit now!  0: ignore this error  -1: repeat this operation
+    logger.debug(f'We run into an error. Message: {msg}. Default decision code: {default}')
+    logger.error(msg)
+    if default == 0:
+        def_s = 'ignore this error'
+    elif default == 1:
+        def_s = 'exit now!'
+    elif default == -1:
+        def_s = 'repeat this operation'
+    else:
+        def_s = 'exit now!'
+    print('Unfortunately, the last operation was failed, what shall I do?')
+    print(f'Press e for exit now, i for ignore this error, r for repeat this operation. Default option: {def_s}')
+    var1 = input().lower()
+    if var1 == 'e':
+        logger.debug('Decision code is 1.')
+        raise
+    elif var1 == 'i':
+        logger.debug('Decision code is 0')
+        return 0
+    elif var1 == 'r':
+        logger.debug('Decision code is -1')
+        return -1
+    else:
+        logger.debug(f'Decision code is {default}')
+        if default == 1:
+            raise
+        return default
+
+
+def install_mcdr(cu_pip_exe_path):
+    execute_command(f'{cu_pip_exe_path} install mcdreforged', default_decision_code=-1)
+
+
+def init_env_mcdr(cu_python_exe_path):
+    execute_command(f'{cu_python_exe_path} -m mcdreforged init', default_decision_code=1)
+
+
 def main(args: list):
     global config
+
     if args[1] == 'gen_config':
         logger.info('Generating default config file.')
         with open(r'./env1.json', 'w', encoding='utf-8') as f:
@@ -106,7 +168,15 @@ def main(args: list):
 
             config = json.loads(f.read(), object_hook=dict2config)
 
+        if config.debug is True:
+            logger.info('Logging level is set to debug.')
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.info('Logging level is set to info.')
+            logger.setLevel(logging.INFO)
+
         # mkdir and init mcdr
+        logger.info('Checking environment...')
         if os.path.exists(config.env_path) and os.path.isdir(config.env_path):
             if os.path.exists(os.path.join(config.env_path, 'metadata.json')):
                 with open(os.path.join(config.env_path, 'metadata.json'), 'r', encoding='utf-8') as f1:
@@ -127,7 +197,10 @@ def main(args: list):
         elif not os.path.isdir(config.env_path):
             logger.fatal(f'{config.env_path} is a file!')
             raise
+        else:
+            logger.info('Fine. We will create a new environment.')
 
+        logger.debug('Creating env folders.')
         os.mkdir(config.env_path)
         os.chdir(config.env_path)
 
@@ -140,14 +213,18 @@ def main(args: list):
         else:
             cu_pip_exe_path = config.pip_path
 
+        logger.info(f'Python path: {cu_python_exe_path}')
+        logger.info(f'pip path: {cu_pip_exe_path}')
+
         print(f'Shall I install the latest mcdreforged package by using {cu_pip_exe_path}? [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
-            os.system(f'{cu_pip_exe_path} install mcdreforged')  # TODO: specific mcdr version
+            logger.info('Installing latest mcdreforged')
+            install_mcdr(cu_pip_exe_path)
         print(f'Shall I init mcdreforged now in env path? [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
-            os.system(f'{cu_python_exe_path} -m mcdreforged init')
+            init_env_mcdr(cu_python_exe_path)
         print(f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
