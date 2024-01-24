@@ -150,6 +150,24 @@ def init_env_mcdr(cu_python_exe_path):
     execute_command(f'{cu_python_exe_path} -m mcdreforged init', default_decision_code=1)
 
 
+def download_plugins():
+    # TODO
+    plugin_folder_path = os.path.join(os.path.abspath(config.env_path), 'plugins')
+
+    for plugin_url in config.plugins:
+        raise NotImplementedError
+
+
+def download_minecraft_core_jar():
+    # TODO
+    raise NotImplementedError
+
+
+def agree_eula():
+    # TODO
+    raise NotImplementedError
+
+
 def main(args: list):
     global config
 
@@ -228,18 +246,19 @@ def main(args: list):
         print(f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
-            # TODO
-            pass
+            download_plugins()
         print(f'Shall I download minecraft server core jar now? [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
-            # TODO
-            pass
+            download_minecraft_core_jar()
         print(f'Shall I agree the eula in eula.txt now? [y/N]')
         var1 = input().lower()
         if var1 == 'y' or var1 == 'yes':
-            # TODO
-            pass
+            agree_eula()
+    if args[1] == 'test':
+        logger.info('Plugin test started.')
+        # TODO
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
