@@ -159,35 +159,39 @@ def init_env_mcdr(cu_python_exe_path):
     os.chdir(cu_p)
 
 
+def download_anything(url, destination_folder):
+    logger.info(f'Downloading {url}')
+
+    logger.debug('Sending HEAD request...')
+    response = requests.head(url)
+    logger.debug('HEAD request was sent.')
+    content_length = response.headers.get('content-length')
+    logger.debug(f'Content length: {content_length}')
+
+    pbar = tqdm(total=int(content_length), unit='B', unit_scale=True)
+
+    logger.debug('Sending GET request...')
+    response = requests.get(url, stream=True)
+    logger.debug('GET request was sent.')
+
+    plg_file_path = os.path.join(destination_folder, urlparse(url).path.split("/")[-1])
+
+    with open(plg_file_path, 'wb') as f:
+        for chunk in response.iter_content(1024):  # chunk size: 1KB
+            if chunk:
+                f.write(chunk)
+                pbar.update(len(chunk))
+    pbar.close()
+    logger.info(f'Download complete!')
+
+
 def download_plugins():
     logger.info('Downloading plugins')
     plugin_folder_path = os.path.join(os.path.abspath(config.env_path), 'plugins')
     logger.debug(f'Plugin path: {plugin_folder_path}')
 
     for url in config.plugins:
-        logger.info(f'Downloading {url}')
-
-        logger.debug('Sending HEAD request...')
-        response = requests.head(url)
-        logger.debug('HEAD request was sent.')
-        content_length = response.headers.get('content-length')
-        logger.debug(f'Content length: {content_length}')
-
-        pbar = tqdm(total=int(content_length), unit='B', unit_scale=True)
-
-        response = requests.get(url, stream=True)
-        logger.debug('GET request was sent.')
-
-        plg_file_path = os.path.join(plugin_folder_path, urlparse(url).path.split("/")[-1])
-        #Path(plg_file_path).touch()
-
-        with open(plg_file_path, 'wb') as f:
-            for chunk in response.iter_content(1024):  # chunk size: 1KB
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(len(chunk))
-        pbar.close()
-        logger.info(f'Download complete!')
+        download_anything(url, plugin_folder_path)
     logger.info('Plugins download completed!')
 
 
