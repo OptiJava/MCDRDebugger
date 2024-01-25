@@ -4,6 +4,11 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
+from urllib.parse import urlparse
+
+import requests
+from tqdm import tqdm
 
 
 class Config:
@@ -96,14 +101,15 @@ def execute_command(cmd: str, default_decision_code: int = 1):
         while True:
             line = process.stdout.readline()
             if not line:
+                process.wait()
                 logger.info(f'Operation finished. Exit code: {process.returncode}')
                 break
             print(line)
         return process.returncode
     while True:
-        if exe() is not 0:  # TODO: specific mcdr version
+        if exe() != 0:  # TODO: specific mcdr version
             logger.debug('Failed!')
-            if err_note(f'Failed to execute {cmd}', default_decision_code) is 0:
+            if err_note(f'Failed to execute {cmd}', default_decision_code) == 0:
                 break
             else:
                 continue
@@ -147,15 +153,42 @@ def install_mcdr(cu_pip_exe_path):
 
 
 def init_env_mcdr(cu_python_exe_path):
+    cu_p = os.getcwd()
+    os.chdir(config.env_path)
     execute_command(f'{cu_python_exe_path} -m mcdreforged init', default_decision_code=1)
+    os.chdir(cu_p)
 
 
 def download_plugins():
-    # TODO
+    logger.info('Downloading plugins')
     plugin_folder_path = os.path.join(os.path.abspath(config.env_path), 'plugins')
+    logger.debug(f'Plugin path: {plugin_folder_path}')
 
-    for plugin_url in config.plugins:
-        raise NotImplementedError
+    for url in config.plugins:
+        logger.info(f'Downloading {url}')
+
+        logger.debug('Sending HEAD request...')
+        response = requests.head(url)
+        logger.debug('HEAD request was sent.')
+        content_length = response.headers.get('content-length')
+        logger.debug(f'Content length: {content_length}')
+
+        pbar = tqdm(total=int(content_length), unit='B', unit_scale=True)
+
+        response = requests.get(url, stream=True)
+        logger.debug('GET request was sent.')
+
+        plg_file_path = os.path.join(plugin_folder_path, urlparse(url).path.split("/")[-1])
+        #Path(plg_file_path).touch()
+
+        with open(plg_file_path, 'wb') as f:
+            for chunk in response.iter_content(1024):  # chunk size: 1KB
+                if chunk:
+                    f.write(chunk)
+                    pbar.update(len(chunk))
+        pbar.close()
+        logger.info(f'Download complete!')
+    logger.info('Plugins download completed!')
 
 
 def download_minecraft_core_jar():
@@ -170,6 +203,12 @@ def agree_eula():
 
 def main(args: list):
     global config
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('[%(asctime)s] %(name)s %(levelname)s: %(message)s',
+                                           datefmt='%Y-%m-%d %H:%M:%S'))
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
 
     if args[1] == 'gen_config':
         logger.info('Generating default config file.')
@@ -189,9 +228,6 @@ def main(args: list):
         if config.debug is True:
             logger.info('Logging level is set to debug.')
             logger.setLevel(logging.DEBUG)
-        else:
-            logger.info('Logging level is set to info.')
-            logger.setLevel(logging.INFO)
 
         # mkdir and init mcdr
         logger.info('Checking environment...')
@@ -212,7 +248,7 @@ def main(args: list):
             else:
                 logger.fatal('Cancelled.')
                 raise
-        elif not os.path.isdir(config.env_path):
+        elif os.path.isfile(config.env_path):
             logger.fatal(f'{config.env_path} is a file!')
             raise
         else:
@@ -220,7 +256,6 @@ def main(args: list):
 
         logger.debug('Creating env folders.')
         os.mkdir(config.env_path)
-        os.chdir(config.env_path)
 
         if config.python_path == '':
             cu_python_exe_path = 'python3'
