@@ -316,4 +316,7 @@ def main(args: list):
 
 
 if __name__ == '__main__':
-    main(sys.argv)
+    try:
+        main(sys.argv)
+    except KeyboardInterrupt:
+        print('Cancelled!')
