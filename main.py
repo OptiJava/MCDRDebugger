@@ -106,6 +106,7 @@ def execute_command(cmd: str, default_decision_code: int = 1):
                 break
             print(line)
         return process.returncode
+
     while True:
         if exe() != 0:  # TODO: specific mcdr version
             logger.debug('Failed!')
@@ -159,7 +160,7 @@ def init_env_mcdr(cu_python_exe_path):
     os.chdir(cu_p)
 
 
-def download_anything(url, destination_folder):
+def download_anything(url, destination_folder, file_name: str = None):
     logger.info(f'Downloading {url}')
 
     logger.debug('Sending HEAD request...')
@@ -174,9 +175,14 @@ def download_anything(url, destination_folder):
     response = requests.get(url, stream=True)
     logger.debug('GET request was sent.')
 
-    plg_file_path = os.path.join(destination_folder, urlparse(url).path.split("/")[-1])
+    if file_name is not None:
+        dst_file_name = file_name
+    else:
+        dst_file_name = urlparse(url).path.split("/")[-1]
 
-    with open(plg_file_path, 'wb') as f:
+    dst_file_path = os.path.join(destination_folder, dst_file_name)
+
+    with open(dst_file_path, 'wb') as f:
         for chunk in response.iter_content(1024):  # chunk size: 1KB
             if chunk:
                 f.write(chunk)
@@ -196,13 +202,18 @@ def download_plugins():
 
 
 def download_minecraft_core_jar():
-    # TODO
-    raise NotImplementedError
+    logger.info('Downloading minecraft core jar')
+    download_anything(config.core_server_url, os.path.join(config.env_path, 'server'), file_name='minecraft_server.jar')
+
+    if config.auto_eula:
+        agree_eula()
 
 
 def agree_eula():
-    # TODO
-    raise NotImplementedError
+    logger.info('Generating eula.txt')
+    eula_path = os.path.join(config.env_path, 'server', 'eula.txt')
+    with open(eula_path, 'w', encoding='utf-8') as eula_file:
+        eula_file.write('eula=true')
 
 
 def main(args: list):
@@ -285,7 +296,8 @@ def main(args: list):
             init_env_mcdr(cu_python_exe_path)
 
         if len(config.plugins) > 0:
-            print(f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
+            print(
+                f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
             var1 = input().lower()
             if var1 == 'yes' or var1 == 'y':
                 download_plugins()
