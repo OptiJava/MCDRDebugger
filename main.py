@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -31,6 +30,7 @@ class Config:
         ##########
         # minecraft server configurations
         self.core_server_url = core_server_url
+        # if this is empty, we will not download server core file
         # will download server core file from this url
         # Default: 1.20.4 vanilla server url from mojang
         self.auto_eula = auto_eula
@@ -278,22 +278,25 @@ def main(args: list):
         if var1 == 'yes' or var1 == 'y':
             logger.info('Installing latest mcdreforged')
             install_mcdr(cu_pip_exe_path)
+
         print(f'Shall I init mcdreforged now in env path? [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
             init_env_mcdr(cu_python_exe_path)
-        print(f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
-        var1 = input().lower()
-        if var1 == 'yes' or var1 == 'y':
-            download_plugins()
-        print(f'Shall I download minecraft server core jar now? [y/N]')
-        var1 = input().lower()
-        if var1 == 'yes' or var1 == 'y':
-            download_minecraft_core_jar()
-        print(f'Shall I agree the eula in eula.txt now? [y/N]')
-        var1 = input().lower()
-        if var1 == 'y' or var1 == 'yes':
-            agree_eula()
+
+        if len(config.plugins) > 0:
+            print(f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
+            var1 = input().lower()
+            if var1 == 'yes' or var1 == 'y':
+                download_plugins()
+
+        if config.core_server_url:
+            print(f'Shall I download minecraft server core jar now? [y/N]')
+            var1 = input().lower()
+            if var1 == 'yes' or var1 == 'y':
+                download_minecraft_core_jar()
+        else:
+            logger.warning('server_core_url is empty, will not download server core file.')
     if args[1] == 'test':
         logger.info('Plugin test started.')
         # TODO
