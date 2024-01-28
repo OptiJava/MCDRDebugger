@@ -85,8 +85,8 @@ class Config:
 
 
 class MetaData:
-    def __init__(self, initialized):
-        self.initialized = False
+    def __init__(self, initialized=False):
+        self.initialized = initialized
         # will mark as True after init
 
 
@@ -309,10 +309,28 @@ def main(args: list):
                 download_minecraft_core_jar()
         else:
             logger.warning('server_core_url is empty, will not download server core file.')
+
+        logger.info('Almost done! Now I am going to create metadata.json...')
+        with open(os.path.join(config.env_path, 'metadata.json'), mode='w', encoding='utf-8') as metadata_file:
+            metadata_file.write(json.dumps(MetaData(initialized=True).__dict__))
+            logger.info('Done.')
+
+        logger.info('Congratulation! The environment was successfully initialized!')
     if args[1] == 'test':
         logger.info('Plugin test started.')
-        # TODO
-        raise NotImplementedError
+
+        if not os.path.exists(os.path.join(config.env_path, 'metadata.json')):
+            logger.fatal('metadata.json is not exist!')
+            logger.fatal('This environment has not initialized yet! Please init this environment by "python3 main.py '
+                         'init ..." first!')
+            raise
+        with open(os.path.join(config.env_path, 'metadata.json')) as fff:
+            if not json.loads(fff.read())['initialized']:
+                logger.fatal('"initialized" is not True in metadata.json!')
+                logger.fatal(
+                    'This environment has not initialized yet! Please init this environment by "python3 main.py '
+                    'init ..." first!')
+                raise
 
 
 if __name__ == '__main__':
