@@ -22,7 +22,7 @@ class Config:
                  env_path='./env',
                  method='mcdr_command',
                  plugin_code_path=r'./code',
-                 mcdr_pack_extra_options='--ignore-patterns __pycache__'
+                 mcdr_pack_extra_options='--ignore-patterns .gitignore'
                  ):
 
         self.debug = debug
@@ -74,7 +74,7 @@ class Config:
         self.mcdr_pack_extra_options = mcdr_pack_extra_options
         # did you want to add some extra options when packing plugin by mcdr pack command?
         # see mcdr official docs for more details
-        # Default: --ignore-patterns __pycache__ (will ignore __pycache__)
+        # Default: --ignore-patterns .gitignore
 
     # def keys(self):
     #    return ('debug', 'core_server_url', 'auto_eula', 'plugins', 'python_path',
@@ -322,13 +322,20 @@ def main(args: list):
         logger.info('Congratulation! The environment was successfully initialized!')
     if args[1] == 'test':
         logger.info('Plugin test started.')
-
         load_config(args)
 
+        plg_path = os.path.join(config.env_path, 'plugins')
+
+        logger.info('Checking environment...')
         if not os.path.exists(os.path.join(config.env_path, 'metadata.json')):
             logger.fatal('metadata.json is not exist!')
             logger.fatal('This environment has not initialized yet! Please init this environment by "python3 main.py '
                          'init ..." first!')
+            raise
+        if not os.path.exists(plg_path):
+            logger.fatal("plugins folder is not exist, so plugin testing can't be done now.")
+            logger.fatal('Maybe this environment has not fully initialized yet! Please init this environment by '
+                         '"python3 main.py init ..." first!')
             raise
         with open(os.path.join(config.env_path, 'metadata.json')) as fff:
             if not json.loads(fff.read())['initialized']:
@@ -337,6 +344,28 @@ def main(args: list):
                     'This environment has not initialized yet! Please init this environment using "python3 main.py '
                     'init ..." first!')
                 raise
+        logger.info('Fine. We can test the plugin now.')
+
+        if config.method == 'mcdr_command':
+            if not os.path.isdir(config.plugin_code_path):
+                # TODO: logs
+                raise
+            execute_command(f'{config.python_path} -m mcdreforged pack '
+                            f'-i {config.plugin_code_path} '
+                            f'-o {plg_path} '
+                            f'{config.mcdr_pack_extra_options}')
+            raise NotImplementedError
+        elif config.method == 'single_file':
+            if not os.path.isfile(config.plugin_code_path):
+                # TODO: logs
+                raise
+            raise NotImplementedError
+        elif config.method == 'folder':
+            # TODO
+            raise NotImplementedError
+        else:
+            # TODO
+            raise NotImplementedError
 
 
 if __name__ == '__main__':
