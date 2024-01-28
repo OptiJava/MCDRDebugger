@@ -192,9 +192,11 @@ def download_anything(url, destination_folder, file_name: str = None):
     logger.debug('GET request was sent.')
 
     if file_name is not None:
+        logger.debug(f'The file is renamed to {file_name}.')
         dst_file_name = file_name
     else:
         dst_file_name = urlparse(url).path.split("/")[-1]
+        logger.debug(f'No specific file name. Use default name {dst_file_name}.')
 
     dst_file_path = os.path.join(destination_folder, dst_file_name)
 
