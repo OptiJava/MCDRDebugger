@@ -95,6 +95,22 @@ logger = logging.getLogger('mcdr_debugger')
 config = Config()
 
 
+def load_config(args):
+    global config
+    logger.info(f'Reading config file at {args[2]}')
+    with open(args[2], 'r', encoding='utf-8') as f:
+        def dict2config(d):
+            return Config(d['debug'], d['core_server_url'], d['auto_eula'], d['plugins'], d['python_path'],
+                          d['pip_path'], d['env_path'], d['method'], d['plugin_code_path'],
+                          d['mcdr_pack_extra_options'])
+
+        config = json.loads(f.read(), object_hook=dict2config)
+
+    if config.debug is True:
+        logger.info('Logging level is set to debug.')
+        logger.setLevel(logging.DEBUG)
+
+
 def execute_command(cmd: str, default_decision_code: int = 1):
     def exe():
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -217,8 +233,6 @@ def agree_eula():
 
 
 def main(args: list):
-    global config
-
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('[%(asctime)s] %(name)s %(levelname)s: %(message)s',
                                            datefmt='%Y-%m-%d %H:%M:%S'))
@@ -230,19 +244,7 @@ def main(args: list):
         with open(r'./env1.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(config.__dict__))
     if args[1] == 'init':
-        # read config
-        logger.info(f'Reading config file at {args[2]}')
-        with open(args[2], 'r', encoding='utf-8') as f:
-            def dict2config(d):
-                return Config(d['debug'], d['core_server_url'], d['auto_eula'], d['plugins'], d['python_path'],
-                              d['pip_path'], d['env_path'], d['method'], d['plugin_code_path'],
-                              d['mcdr_pack_extra_options'])
-
-            config = json.loads(f.read(), object_hook=dict2config)
-
-        if config.debug is True:
-            logger.info('Logging level is set to debug.')
-            logger.setLevel(logging.DEBUG)
+        load_config(args)
 
         # mkdir and init mcdr
         logger.info('Checking environment...')
@@ -319,6 +321,8 @@ def main(args: list):
     if args[1] == 'test':
         logger.info('Plugin test started.')
 
+        load_config(args)
+
         if not os.path.exists(os.path.join(config.env_path, 'metadata.json')):
             logger.fatal('metadata.json is not exist!')
             logger.fatal('This environment has not initialized yet! Please init this environment by "python3 main.py '
@@ -328,7 +332,7 @@ def main(args: list):
             if not json.loads(fff.read())['initialized']:
                 logger.fatal('"initialized" is not True in metadata.json!')
                 logger.fatal(
-                    'This environment has not initialized yet! Please init this environment by "python3 main.py '
+                    'This environment has not initialized yet! Please init this environment using "python3 main.py '
                     'init ..." first!')
                 raise
 
