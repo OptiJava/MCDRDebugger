@@ -74,6 +74,7 @@ class Config:
         self.mcdr_pack_extra_options = mcdr_pack_extra_options
         # did you want to add some extra options when packing plugin by mcdr pack command?
         # see mcdr official docs for more details
+        # -i & -o options will be filled automatically by this script. You mustn't add -i or -o option.
         # Default: --ignore-patterns .gitignore
 
     # def keys(self):
