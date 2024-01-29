@@ -358,7 +358,7 @@ def main(args: list):
             raise NotImplementedError
         elif config.method == 'single_file':
             if not os.path.isfile(config.plugin_code_path):
-                # TODO: logs
+                logger.fatal("You choose package method 'single_file', but config.plugin_code_path is not a file!")
                 raise
             raise NotImplementedError
         elif config.method == 'folder':
@@ -367,6 +367,7 @@ def main(args: list):
         else:
             # TODO
             raise NotImplementedError
+        # TODO: run server
 
 
 if __name__ == '__main__':
