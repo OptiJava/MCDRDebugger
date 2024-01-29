@@ -243,6 +243,9 @@ def main(args: list):
     logger.addHandler(handler)
 
     if args[1] == 'gen_config':
+        logger.info('Oh! Looks like that you are a new person who is using this script!')
+        logger.info('Sincerely, if what I guess is true, you MUST read the docs carefully before starting.')
+        logger.info('Or else, this script will sudo rm -rf / your production linux server.')
         logger.info('Generating default config file.')
         with open(r'./env1.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(config.__dict__))
@@ -293,11 +296,14 @@ def main(args: list):
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
             logger.info('Installing latest mcdreforged')
+            logger.info('This action may take a few minutes. 此操作可能需要几分钟。')
             install_mcdr(cu_pip_exe_path)
 
         print(f'Shall I init mcdreforged now in env path? [y/N]')
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
+            logger.info('It\'s almost done. 就快要完成了。')
+            logger.info('Please keep your computer on. 请不要关闭您的计算机。')
             init_env_mcdr(cu_python_exe_path)
 
         if len(config.plugins) > 0:
@@ -305,12 +311,14 @@ def main(args: list):
                 f'Shall I download mcdr plugins which you want? (plugin list can be changed in env config file) [y/N]')
             var1 = input().lower()
             if var1 == 'yes' or var1 == 'y':
+                logger.info('Hopefully it will not keep getting stuck at `Downloading 0%`')
                 download_plugins()
 
         if config.core_server_url:
             print(f'Shall I download minecraft server core jar now? [y/N]')
             var1 = input().lower()
             if var1 == 'yes' or var1 == 'y':
+                logger.info('This action may take a few minutes. 海内存知己，天涯若比邻。 此操作可能需要花费几分钟。')
                 download_minecraft_core_jar()
         else:
             logger.warning('server_core_url is empty, will not download server core file.')
