@@ -349,7 +349,7 @@ def main(args: list):
 
         if config.method == 'mcdr_command':
             if not os.path.isdir(config.plugin_code_path):
-                # TODO: logs
+                logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
                 raise
             execute_command(f'{config.python_path} -m mcdreforged pack '
                             f'-i {config.plugin_code_path} '
@@ -362,10 +362,13 @@ def main(args: list):
                 raise
             raise NotImplementedError
         elif config.method == 'folder':
-            # TODO
+            if not os.path.isdir(config.plugin_code_path):
+                logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
+                raise
             raise NotImplementedError
         else:
-            # TODO
+            logger.fatal(f'You choose package method `{config.method}`, but I do not even know what you are saying.')
+            logger.fatal('Can you read the docs carefully, bro?')
             raise NotImplementedError
         # TODO: run server
 
