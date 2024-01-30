@@ -235,6 +235,36 @@ def agree_eula():
         eula_file.write('eula=true')
 
 
+def package_plugin(plg_path):
+    if config.method == 'mcdr_command':
+        if not os.path.isdir(config.plugin_code_path):
+            logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
+            raise
+        execute_command(f'{config.python_path} -m mcdreforged pack '
+                        f'-i {config.plugin_code_path} '
+                        f'-o {plg_path} '
+                        f'{config.mcdr_pack_extra_options}')
+    elif config.method == 'single_file':
+        if not os.path.isfile(config.plugin_code_path):
+            logger.fatal("You choose package method 'single_file', but config.plugin_code_path is not a file!")
+            raise
+        shutil.copy(config.plugin_code_path, plg_path)
+    elif config.method == 'folder':
+        if not os.path.isdir(config.plugin_code_path):
+            logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
+            raise
+        shutil.copytree(config.plugin_code_path, plg_path)
+    else:
+        logger.fatal(f'You choose package method `{config.method}`, but I do not even know what you are saying.')
+        logger.fatal('Can you read the docs carefully, bro?')
+        raise
+
+
+def run_server():
+    # TODO: run server
+    raise NotImplementedError
+
+
 def main(args: list):
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('[%(asctime)s] %(name)s %(levelname)s: %(message)s',
@@ -355,30 +385,9 @@ def main(args: list):
                 raise
         logger.info('Fine. We can test the plugin now.')
 
-        if config.method == 'mcdr_command':
-            if not os.path.isdir(config.plugin_code_path):
-                logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
-                raise
-            execute_command(f'{config.python_path} -m mcdreforged pack '
-                            f'-i {config.plugin_code_path} '
-                            f'-o {plg_path} '
-                            f'{config.mcdr_pack_extra_options}')
-        elif config.method == 'single_file':
-            if not os.path.isfile(config.plugin_code_path):
-                logger.fatal("You choose package method 'single_file', but config.plugin_code_path is not a file!")
-                raise
-            shutil.copy(config.plugin_code_path, plg_path)
-        elif config.method == 'folder':
-            if not os.path.isdir(config.plugin_code_path):
-                logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
-                raise
-            shutil.copytree(config.plugin_code_path, plg_path)
-        else:
-            logger.fatal(f'You choose package method `{config.method}`, but I do not even know what you are saying.')
-            logger.fatal('Can you read the docs carefully, bro?')
-            raise
+        package_plugin(plg_path)
 
-        # TODO: run server
+        run_server()
 
         print('Seems like testing server is closed, shall I remove your packaged plugin which is in mcdr plugins '
               'folder?')
