@@ -363,22 +363,30 @@ def main(args: list):
                             f'-i {config.plugin_code_path} '
                             f'-o {plg_path} '
                             f'{config.mcdr_pack_extra_options}')
-            raise NotImplementedError
         elif config.method == 'single_file':
             if not os.path.isfile(config.plugin_code_path):
                 logger.fatal("You choose package method 'single_file', but config.plugin_code_path is not a file!")
                 raise
-            raise NotImplementedError
+            shutil.copy(config.plugin_code_path, plg_path)
         elif config.method == 'folder':
             if not os.path.isdir(config.plugin_code_path):
                 logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
                 raise
-            raise NotImplementedError
+            shutil.copytree(config.plugin_code_path, plg_path)
         else:
             logger.fatal(f'You choose package method `{config.method}`, but I do not even know what you are saying.')
             logger.fatal('Can you read the docs carefully, bro?')
-            raise NotImplementedError
+            raise
+
         # TODO: run server
+
+        print('Seems like testing server is closed, shall I remove your packaged plugin which is in mcdr plugins '
+              'folder?')
+        var1 = input().lower()
+        if var1 == 'yes' or var1 == 'y':
+            logger.info('Removing...')
+            # TODO: get plugin file name and remove
+            raise NotImplementedError
 
 
 if __name__ == '__main__':
