@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -112,8 +113,11 @@ def load_config(args):
         logger.setLevel(logging.DEBUG)
 
 
-def execute_command(cmd: str, default_decision_code: int = 1):
+def execute_command(cmd: str, default_decision_code: int = 1, matcher=None):
+    matched_lines = list()
+
     def exe():
+        matched_lines.clear()
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         while True:
             line = process.stdout.readline()
@@ -121,7 +125,11 @@ def execute_command(cmd: str, default_decision_code: int = 1):
                 process.wait()
                 logger.info(f'Operation finished. Exit code: {process.returncode}')
                 break
-            print(line)
+            strip_line = str(line.strip())
+            print(strip_line)
+
+            if matcher is not None:
+                matched_lines.append(re.findall(matcher, strip_line))
         return process.returncode
 
     while True:
@@ -133,6 +141,7 @@ def execute_command(cmd: str, default_decision_code: int = 1):
                 continue
         else:
             break
+    return matched_lines
 
 
 def err_note(msg: str, default: int) -> int:
@@ -235,25 +244,28 @@ def agree_eula():
         eula_file.write('eula=true')
 
 
-def package_plugin(plg_path):
+def package_plugin(plg_path) -> str:
     if config.method == 'mcdr_command':
         if not os.path.isdir(config.plugin_code_path):
             logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
             raise
-        execute_command(f'{config.python_path} -m mcdreforged pack '
-                        f'-i {config.plugin_code_path} '
-                        f'-o {plg_path} '
-                        f'{config.mcdr_pack_extra_options}')
+        mtd_l: list = execute_command(f'{config.python_path} -m mcdreforged pack '
+                                      f'-i {config.plugin_code_path} '
+                                      f'-o {plg_path} '
+                                      f'{config.mcdr_pack_extra_options}', matcher=r'Packed \d* files/folders into "')
+        return re.search(r'\"(.*)\"', mtd_l[-1]).group(1)
     elif config.method == 'single_file':
         if not os.path.isfile(config.plugin_code_path):
             logger.fatal("You choose package method 'single_file', but config.plugin_code_path is not a file!")
             raise
         shutil.copy(config.plugin_code_path, plg_path)
+        return os.path.basename(config.plugin_code_path)
     elif config.method == 'folder':
         if not os.path.isdir(config.plugin_code_path):
             logger.fatal("You choose package method 'mcdr_command', but config.plugin_code_path is not a folder!")
             raise
         shutil.copytree(config.plugin_code_path, plg_path)
+        return os.path.basename(config.plugin_code_path)
     else:
         logger.fatal(f'You choose package method `{config.method}`, but I do not even know what you are saying.')
         logger.fatal('Can you read the docs carefully, bro?')
@@ -385,6 +397,7 @@ def main(args: list):
                 raise
         logger.info('Fine. We can test the plugin now.')
 
+        # TODO: get file name
         package_plugin(plg_path)
 
         run_server()
