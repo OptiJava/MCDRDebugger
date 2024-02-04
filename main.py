@@ -23,7 +23,7 @@ class Config:
                  env_path='./env',
                  method='mcdr_command',
                  plugin_code_path=r'./code',
-                 mcdr_pack_extra_options='--ignore-patterns .gitignore'
+                 mcdr_pack_extra_options='--ignore-file .gitignore'
                  ):
 
         self.debug = debug
@@ -76,7 +76,7 @@ class Config:
         # did you want to add some extra options when packing plugin by mcdr pack command?
         # see mcdr official docs for more details
         # -i & -o options will be filled automatically by this script. You mustn't add -i or -o option.
-        # Default: --ignore-patterns .gitignore
+        # Default: --ignore-file .gitignore
 
     # def keys(self):
     #    return ('debug', 'core_server_url', 'auto_eula', 'plugins', 'python_path',
@@ -398,7 +398,8 @@ def main(args: list):
         logger.info('Fine. We can test the plugin now.')
 
         # TODO: get file name
-        package_plugin(plg_path)
+        final_filename = package_plugin(plg_path)
+        logger.info(f'Packed file name: {final_filename}')
 
         run_server()
 
