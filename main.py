@@ -113,7 +113,7 @@ def load_config(args):
         logger.setLevel(logging.DEBUG)
 
 
-def execute_command(cmd: str, default_decision_code: int = 1, matcher=None):
+def execute_command(cmd: str, default_decision_code: int = 1, matcher=None) -> list:
     matched_lines = list()
 
     def exe():
@@ -125,14 +125,15 @@ def execute_command(cmd: str, default_decision_code: int = 1, matcher=None):
                 process.wait()
                 logger.info(f'Operation finished. Exit code: {process.returncode}')
                 break
-            strip_line = str(line.strip())
-            print(strip_line)
+            processed_line = str(line.strip())[2:-1]  # in order to remove "b''" letters in outputs
+            print(processed_line)
 
             if matcher is not None:
-                matched_lines.extend(re.findall(matcher, strip_line))
+                matched_lines.extend(re.findall(matcher, processed_line))
         return process.returncode
 
     while True:
+        logger.debug(f'Executing command: {cmd}')
         if exe() != 0:  # TODO: specific mcdr version
             logger.debug('Failed!')
             if err_note(f'Failed to execute {cmd}', default_decision_code) == 0:
@@ -252,7 +253,8 @@ def package_plugin(plg_path) -> str:
         mtd_l: list = execute_command(f'{config.python_path} -m mcdreforged pack '
                                       f'-i {config.plugin_code_path} '
                                       f'-o {plg_path} '
-                                      f'{config.mcdr_pack_extra_options}', matcher=r'Packed \d* files/folders into "')
+                                      f'{config.mcdr_pack_extra_options}', matcher=r'Packed \d* files/folders into ".*"')
+        logger.debug(f'Found the line which contains mcdr plugin file name: {mtd_l[-1]}')
         return re.search(r'\"(.*)\"', mtd_l[-1]).group(1)
     elif config.method == 'single_file':
         if not os.path.isfile(config.plugin_code_path):
