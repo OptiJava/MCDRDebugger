@@ -275,8 +275,10 @@ def package_plugin(plg_path) -> str:
 
 
 def run_server():
-    # TODO: run server
-    raise NotImplementedError
+    cu_p = os.getcwd()
+    os.chdir(config.env_path)
+    os.system(f'{config.python_path} -m mcdreforged')
+    os.chdir(cu_p)
 
 
 def main(args: list):
@@ -399,7 +401,6 @@ def main(args: list):
                 raise
         logger.info('Fine. We can test the plugin now.')
 
-        # TODO: get file name
         final_filename = package_plugin(plg_path)
         logger.info(f'Packed file name: {final_filename}')
 
@@ -410,8 +411,15 @@ def main(args: list):
         var1 = input().lower()
         if var1 == 'yes' or var1 == 'y':
             logger.info('Removing...')
-            # TODO: get plugin file name and remove
-            raise NotImplementedError
+            file_abs_path = os.path.join(plg_path, final_filename)
+            if os.path.isfile(file_abs_path):
+                os.remove(file_abs_path)
+            else:
+                shutil.rmtree(file_abs_path)
+            logger.info('Remove successfully!')
+
+        logger.info('Testing finished! I hope your mcdr plugin can pass the test once with 0 fatal 0 error 0 '
+                    'exception 0 warning. :)')
 
 
 if __name__ == '__main__':
