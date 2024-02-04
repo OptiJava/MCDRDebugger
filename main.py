@@ -129,7 +129,7 @@ def execute_command(cmd: str, default_decision_code: int = 1, matcher=None):
             print(strip_line)
 
             if matcher is not None:
-                matched_lines.append(re.findall(matcher, strip_line))
+                matched_lines.extend(re.findall(matcher, strip_line))
         return process.returncode
 
     while True:
