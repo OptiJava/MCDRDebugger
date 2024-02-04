@@ -8,6 +8,10 @@
 - `python3 main.py init <config_file_path>`: Init a testing environment. You will debug your plugin by this environment.
 - `python3 main.py test <config_file_path>`: Test your plugin.
 
+~~I add many interesting sayings in logs, try it and see(~~
+
+Considering that `python3 main.py test ./env1.json` is a little bit long, you can edit the `t.sh` file and use it instead.
+
 ## Config
 
 ```
