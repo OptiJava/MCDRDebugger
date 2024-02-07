@@ -8,7 +8,6 @@ import sys
 from urllib.parse import urlparse
 
 import requests
-from tqdm import tqdm
 
 
 class Config:
@@ -196,7 +195,11 @@ def download_anything(url, destination_folder, file_name: str = None):
     content_length = response.headers.get('content-length')
     logger.debug(f'Content length: {content_length}')
 
-    pbar = tqdm(total=int(content_length), unit='B', unit_scale=True)
+    try:
+        from tqdm import tqdm
+        pbar = tqdm(total=int(content_length), unit='B', unit_scale=True)
+    except Exception:
+        pass
 
     logger.debug('Sending GET request...')
     response = requests.get(url, stream=True)
@@ -215,8 +218,14 @@ def download_anything(url, destination_folder, file_name: str = None):
         for chunk in response.iter_content(1024):  # chunk size: 1KB
             if chunk:
                 f.write(chunk)
-                pbar.update(len(chunk))
-    pbar.close()
+                try:
+                    pbar.update(len(chunk))
+                except Exception:
+                    pass
+    try:
+        pbar.close()
+    except Exception:
+        pass
     logger.info(f'Download complete!')
 
 
